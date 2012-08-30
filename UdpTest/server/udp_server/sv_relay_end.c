@@ -53,9 +53,10 @@ void tcpconnect(struct sockaddr_in from, char *ipstr)
 int
 main()
 {
- int sock;
+ int sock, sock2;
  struct sockaddr_in addr;
  struct sockaddr_in from;
+ struct sockaddr_in to;
  int sockaddr_in_size = sizeof(struct sockaddr_in);
  int size;
 
@@ -68,13 +69,13 @@ main()
  addr.sin_port = htons(12345);
  addr.sin_addr.s_addr = INADDR_ANY;
 
- bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+bind(sock, (struct sockaddr *)&addr , sizeof(addr)); 
+sock2 = socket(AF_INET, SOCK_DGRAM, 0);
 
  while(1){
   memset(buf, 0, sizeof(buf));
   printf("waiting for recv..\n");
 
-  /*受信*/
   size = recvfrom(sock, buf, 2048-1, 0, 
                     (struct sockaddr *)&from, &sockaddr_in_size);
   buf[2048-1] = 0;
@@ -83,13 +84,11 @@ main()
   printf("%s\n",buf);
   printf("recv data from : %s:%d\n", str, ntohs(from.sin_port));
 
-//  tcpconnect(from,str);
-
-  /*返信*/
-  strcpy(buf , "echo");
-  sendto(sock, buf, size, 0, (struct sockaddr *)&from, sockaddr_in_size);
+  memcpy(&to, buf, sizeof(struct sockaddr_in));
+  sendto(sock2, "mtgto sanjou!", size, 0, (struct sockaddr *)&to, sockaddr_in_size);
   printf("%s\n",buf);
-  printf("send data to :%s:%d\n", str, ntohs(from.sin_port));
+  inet_ntop(AF_INET, &to.sin_addr, str, sizeof(str));
+  printf("send data to :%s:%d\n", str, ntohs(to.sin_port));
  }
  close(sock);
 
