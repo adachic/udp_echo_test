@@ -1,15 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
+#include <time.h>
 
 void tcpconnect(struct sockaddr_in from, char *ipstr)
 {
@@ -28,21 +23,21 @@ void tcpconnect(struct sockaddr_in from, char *ipstr)
  /* 127.0.0.1はlocalhost */
  inet_pton(AF_INET, ipstr, &server.sin_addr.s_addr);
 
- printf("willconnect\n");
- printf("recv data from : %d\n",  ntohs(from.sin_port));
+ fprintf(stderr, "willconnect\n");
+ fprintf(stderr, "recv data from : %d\n",  ntohs(from.sin_port));
  /* サーバに接続 */
  // int ret =connect(sock, (struct sockaddr *)&server, sizeof(server));
  //
  from.sin_port = htons(12345);
  int ret = connect(sock, (struct sockaddr *)&from, sizeof(from));
- printf("ret:%d\n",ret);
+ fprintf(stderr, "ret:%d\n",ret);
 
  /* サーバからデータを受信 */
  memset(buf, 0, sizeof(buf));
- printf("read\n");
+ fprintf(stderr, "read\n");
  n = read(sock, buf, sizeof(buf));
 
- printf("%d, %s\n", n, buf);
+ fprintf(stderr, "%d, %s\n", n, buf);
 
  /* socketの終了 */
  close(sock);
@@ -74,21 +69,25 @@ sock2 = socket(AF_INET, SOCK_DGRAM, 0);
 
  while(1){
   memset(buf, 0, sizeof(buf));
-  printf("waiting for recv..\n");
+  fprintf(stderr, "waiting for recv..\n");
 
   size = recvfrom(sock, buf, 2048-1, 0, 
                     (struct sockaddr *)&from, &sockaddr_in_size);
+  time_t now = time(NULL);
+  struct tm *time = localtime(&now);
+  fprintf(stderr, "%02d/%02d %02d:%02d:%02d\n", time->tm_mon+1, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
   buf[2048-1] = 0;
 
   inet_ntop(AF_INET, &from.sin_addr, str, sizeof(str));
-  printf("%s\n",buf);
-  printf("recv data from : %s:%d\n", str, ntohs(from.sin_port));
+  fprintf(stderr, "%s\n",buf);
+  fprintf(stderr, "recv data from : %s:%d\n", str, ntohs(from.sin_port));
 
   memcpy(&to, buf, sizeof(struct sockaddr_in));
-  sendto(sock2, "mtgto sanjou!", size, 0, (struct sockaddr *)&to, sockaddr_in_size);
-  printf("%s\n",buf);
+  sprintf(buf, "%02d/%02d %02d:%02d:%02d", time->tm_mon+1, time->tm_mday, time->tm_hour, time->tm_min, time->tm_sec);
+  sendto(sock2, buf, size, 0, (struct sockaddr *)&to, sockaddr_in_size);
+  fprintf(stderr, "%s\n",buf);
   inet_ntop(AF_INET, &to.sin_addr, str, sizeof(str));
-  printf("send data to :%s:%d\n", str, ntohs(to.sin_port));
+  fprintf(stderr, "send data to :%s:%d\n", str, ntohs(to.sin_port));
  }
  close(sock);
 
